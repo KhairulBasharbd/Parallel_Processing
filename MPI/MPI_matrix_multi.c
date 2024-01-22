@@ -16,12 +16,16 @@ int main(int argc, char const *argv[]) {
 
     MPI_Init(NULL, NULL);
     MPI_Status status;
+
     MPI_Comm_rank(MPI_COMM_WORLD, &id);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 
     if (id == 0) {
         scanf("%d", &count);
         scanf("%d %d %d", &m, &n, &p);
+
+         //t_start = MPI_Wtime();     //starting time counting
+
         // Memory allocation for global matrices
         mat_a = (int *)malloc(count * m * n * sizeof(int));
         mat_b = (int *)malloc(count * n * p * sizeof(int));
@@ -34,7 +38,7 @@ int main(int argc, char const *argv[]) {
             mat_b[i] = 1;
 
         // Send matrix information to other processes
-        for (int i = 1; i < size; i++) {
+        for (int i = 0; i < size; i++) {
             MPI_Send(&count, 1, MPI_INT, i, 0, MPI_COMM_WORLD);
             MPI_Send(&m, 1, MPI_INT, i, 1, MPI_COMM_WORLD);
             MPI_Send(&n, 1, MPI_INT, i, 2, MPI_COMM_WORLD);
@@ -48,6 +52,7 @@ int main(int argc, char const *argv[]) {
     }
     // Each process allocates memory for its local matrices based on the information received.
     l_count = count / size;
+
     l_a = (int *)malloc(l_count * m * n * sizeof(int));
     l_b = (int *)malloc(l_count * n * p * sizeof(int));
     l_c = (int *)malloc(l_count * m * p * sizeof(int));
@@ -89,33 +94,6 @@ int main(int argc, char const *argv[]) {
     t_end = MPI_Wtime();
     time = t_end - t_start;
     printf("PID-%d: Total Time: %f\n", id, time);
-
-    // Local matrices (l_c) are gathered to the global matrix (mat_c) among processes.
-    idx = 0;
-    for (int c = 0; c < l_count; c++) {
-        for (int i = 0; i < m; i++) {
-            for (int j = 0; j < n; j++) {
-                l_c[idx++] = m_c[c][i][j];
-            }
-        }
-    }
-
-    MPI_Gather(l_c, l_count * m * p, MPI_INT, mat_c, l_count * m * p, MPI_INT, 0, MPI_COMM_WORLD);
-    MPI_Barrier(MPI_COMM_WORLD);
-
-    // if (id == 0) {
-    //     printf("Resulting Matrix (mat_c):\n");
-    //    /* for (int c = 0; c < count; c++) {
-    //         printf("Matrix %d:\n", c);
-    //         for (int i = 0; i < m; i++) {
-    //             for (int j = 0; j < p; j++) {
-    //                 printf("%d ", mat_c[(c * m * p) + (i * p) + j]);
-    //             }
-    //             printf("\n");
-    //         }
-    //         printf("\n");
-    //     }*/
-    // }
 
     MPI_Finalize();
     // release memory allocated for the local result matrix (l_c).

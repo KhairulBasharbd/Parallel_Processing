@@ -5,7 +5,7 @@ int main(int argc, char** argv){
     int rank,size;
 
     int arr[8] = {1,2,3,4,5,6,7,8};
-    int scatter_data[2];
+    int sum, scatter_data[2];
 
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -13,8 +13,11 @@ int main(int argc, char** argv){
 
 
     MPI_Scatter(&arr,2,MPI_INT,&scatter_data,2,MPI_INT,0,MPI_COMM_WORLD);
+    sum = scatter_data[0] + scatter_data[1];
 
-    printf("Hello World from process %d of %d, %d\n", rank,scatter_data[0],scatter_data[1]);
+    printf("From process %d, has %d, %d, the sum is %d\n", rank,scatter_data[0],scatter_data[1], sum);
+
+
 
     MPI_Finalize();
     return 0;
